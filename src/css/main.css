@@ -1,0 +1,51 @@
+@import '../../node_modules/antd/dist/antd.css';
+*{
+    margin: 0;
+    padding: 0;
+}
+
+.layout{
+    width: 100%;
+    min-width: 1277px;
+    /*min-height: 600px;*/
+    box-shadow: 0 0 10px rgb(225,225,225);
+    max-width: 1277px;
+    max-height: 100vh;
+    margin:0 auto;
+    box-sizing: border-box;
+    cursor: default;
+}
+
+::-webkit-scrollbar{
+    width:10px;
+}
+::-webkit-scrollbar-thumb{
+    background-color: rgb(230,231,234);
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover{
+    background-color: rgb(225,225,226);
+}
+::-webkit-scrollbar-track{
+    background-color: rgb(245,245,247);
+}
+::-webkit-scrollbar-button{
+    height: 0;
+}
+
+.toast-frame{
+    position: fixed;
+    color:#fff;
+    font-weight: bold;
+    background-color: #000;
+    transition: opacity 0.5s;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    height: 15vh;
+    line-height:15vh;
+    text-align: center;
+    opacity: 0;
+    display: none;
+    padding: 0 0.5em 0 0.5em;
+}

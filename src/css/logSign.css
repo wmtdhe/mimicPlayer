@@ -1,0 +1,137 @@
+.login-box{
+    position: fixed;
+    z-index: 10000;
+    width:437px;
+    height: 79.1vh;
+    display: none;
+    left:50%;
+    transform:translateX(-50%);
+    background-color: rgb(250,250,250);
+    box-shadow: 0 0 10px rgb(153,153,153);
+}
+.l-main-part{
+    width:100%;
+    position: absolute;
+    top:50%;
+    transform: translateY(-50%);
+}
+.login-box form{
+    width:100%;
+}
+.login-box form input{
+    outline-style: none;
+    border:none;
+    width: 90%;
+    /*border:1px solid rgb(217,217,217);*/
+    /*border-radius: 5px;*/
+    /*padding: 0.5em;*/
+    /*width: 74%;*/
+    /*box-sizing: border-box;*/
+    /*margin: 0 auto;*/
+}
+.login-box >div>form div{
+    width: 74%;
+    margin:0 auto;
+    padding: 0.5em;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+.login{
+    background-color: rgb(234,72,72);
+    color:#fff;
+    width: 100%!important;
+    cursor: pointer;
+    padding: 0.5em;
+    border-radius: 5px;
+}
+
+.login:hover{
+    background-color: rgb(198,47,47);
+}
+
+.show{
+    display: block!important;
+}
+
+.l-close{
+    position: absolute;
+    right:1em;
+    top:1em;
+    color:rgb(200,200,200)
+}
+
+.l-close:hover{
+    color:#000;
+    cursor: pointer;
+}
+
+/*profile details*/
+.profile-brief{
+    z-index:10000;
+    background-color: rgb(250,250,250);
+    width:344px;
+    height:445px;
+    position:absolute;
+    top:2.6em;
+    right:-100%;
+    box-shadow: 0 0 10px rgb(153,153,153);
+    border-radius: 5px
+}
+
+.profile-brief:before{
+    content:'.';
+    color:transparent;
+    background-color: rgb(250,250,250);
+    position: absolute;
+    width:3em;
+    height:3em;
+    left:50%;
+    transform:translateX(-50%) rotate(45deg);
+    z-index:-1
+}
+
+.dropdown{
+    position: relative;
+    height: 100%;
+}
+
+.t{
+    display: flex;
+    flex-flow:row nowrap;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 1.5em 0 0 2em;
+}
+
+.temp{
+    color:rgb(237,190,190);
+    cursor: pointer;
+}
+
+.temp:hover{
+    color:#fff;
+}
+
+.personal-detail{
+    display: flex;
+    flex-flow:row nowrap;
+    width: 100%;
+    /*justify-content: ;*/
+}
+.personal-detail>div{
+    flex:1 1 auto;
+    box-sizing: border-box;
+    text-align: center;
+    margin: 1.5em 0 1.5em 0;
+}
+
+.logout {
+    width: 100%;
+    border-top:1px solid rgb(240,240,240);
+    padding: 1.5em 0 1.5em 2em;
+    box-sizing: border-box;
+}
+.logout:hover{
+    background-color: rgb(230,231,234);
+    cursor: pointer;
+}

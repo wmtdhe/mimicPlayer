@@ -1,0 +1,58 @@
+.search-result-frame{
+    width: 79.5%;
+    max-height: 86vh;
+    overflow-y: scroll;
+
+}
+/*custom scrollbar*/
+
+
+.result{
+    width: 100%;
+}
+.result-row-flex{
+    display: flex;
+    flex-flow: row nowrap;
+    width: 100%;
+    box-sizing: border-box;
+    color:rgb(102,102,102)
+}
+.result-row-flex-item{
+    border-top:1px solid;
+    border-bottom:1px solid;
+    border-left:1px solid;
+    border-color:rgb(227,227,229);
+
+}
+.flex1{
+    flex:0 0 6.3%;
+}
+.flex2{
+    flex:1 1 27%;
+}
+.flex3{
+    flex:1 1 14.8%
+}
+.flex4{
+    flex:1 1 19.5%;
+}
+.flex5{
+    flex:1 1 8.8%
+}
+.flex6{
+    flex:1 1 16.1%
+}
+.result-row-flex div{
+    padding: 1em;
+}
+.even{
+    background-color: rgb(245,245,247);
+}
+.focused{
+   background-color: rgb(227,227,229);
+    color:rgb(17,17,17)
+}
+
+.restricted{
+    color:rgb(164,153,164)!important;
+}

@@ -1,0 +1,83 @@
+
+i#p svg:hover,i#d svg:hover{
+    color:black
+}
+.side-frame{
+    min-width:200px ;
+    /*min-height:600px;*/
+    max-height: 86vh;
+    width: 20.5%;
+    /*padding:15px ;*/
+    background-color: rgb(245,245,247);
+    box-sizing: border-box;
+    padding-top: 1em;
+    border-right:1px solid rgb(225,225,226);
+    overflow-y: scroll;
+}
+.side-frame a{
+    text-decoration: none;
+
+    color:rgb(92,92,92);
+    font-family: Andalus ;
+    height: 0;
+}
+.side-frame a:hover{
+    color:#000
+}
+.recommend ul li, .my-music ul li, .create-new ul li, .subscribed-songlist ul li{
+    /*margin-left: 1em;*/
+    list-style: none;
+    padding: 0.5em 0 0.5em 2em;
+    position: relative;
+    box-sizing: border-box;
+    /*text-indent: 1em;*/
+}
+.recommend span, .my-music span, .create-new span, .subscribed-songlist span{
+    padding-left: 1em;
+}
+.recommend ,.my-music, .create-new{
+    margin-bottom:2em;
+    /*box-sizing: border-box;*/
+    cursor: default;
+    font-family: Andalus;
+}
+.create-new{
+    cursor: default;
+    font-family: Andalus;
+}
+
+.active{
+    background-color: rgb(230,231,234);
+    color: black;
+}
+.active::before{
+    color: transparent;
+    content:'.';
+    display: block;
+    height: 100%;
+    position: absolute;
+    background-color: rgb(198,47,47);
+    left: 0;
+    top:0;
+}
+
+.create-action{
+    display: flex;
+    justify-content: space-between;
+    padding-right: 1em;
+}
+
+#toggle-list,#add-list, #sub-toggle{
+    cursor: pointer;
+}
+
+.ellipsis{
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.subscribed-songlist{
+    overflow-y:auto;
+
+}
