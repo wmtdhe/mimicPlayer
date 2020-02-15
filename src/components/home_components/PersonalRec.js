@@ -103,7 +103,7 @@ class PersonalRec extends React.Component{
         return <div className='personal-frame'>
             <Carousel banners={this.state.banners} dbClick={this.props.dbClick} songList={this.props.songList}/>
             <div className='reclist-frame'>
-                <div className='headline1'><span className='hl1'><strong>推荐歌单</strong></span><Link to='/songlist' className='hl2'><span>更多></span></Link></div>
+                <div className='headline1'><span className='hl1'><strong>推荐歌单</strong></span><Link to='/playlist' className='hl2'><span>更多></span></Link></div>
                 <hr/>
                 <div className='list-box' onMouseOver={this.showEditor}>
                     {this.state.recSongLists && this.state.recSongLists.map((v,i)=>{

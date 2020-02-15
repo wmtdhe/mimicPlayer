@@ -4,10 +4,17 @@ import {deleteAll, playsong, openSongPage, switchStatus, timeUpdate,addAll,delet
 
 const mapStateToProps = (state,ownProps)=>{
     // let saved = localStorage.getArr('local')
+    let ownList,user
+    user = state.logStatus?state.logStatus.account.id:null
+    ownList = state.sublists?state.sublists.filter((v,i)=>{
+        return v.userId == user
+    }):null
     return{
     songSrc:state.playing!==null?state.songList[state.playing]:'',
     songList:state.songList,
-    songIndex:state.playing
+    songIndex:state.playing,
+    user:user,
+    ownList:ownList
 }}
 
 const mapDispatchToProps = (dispatch,ownProps)=>({

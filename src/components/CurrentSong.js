@@ -234,4 +234,4 @@ function CurrentSong(props) {
 }
 
 export default CurrentSong;
-export {Pagination}
+export {Pagination,Comments}

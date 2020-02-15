@@ -9,6 +9,7 @@ import SongList from "./SongList";
 import ConnectedSongList from "../container/ConnectedSongList";
 import ConnectedSide from "../container/ConnectedSide";
 import ConnectedHome from "../container/ConnectedHome";
+import SongComment from "./SongComment";
 
 function Content(props) {
     return(
@@ -16,9 +17,11 @@ function Content(props) {
             {props.openPage && <ConnectedCurrentSong/>}
            <ConnectedSide/>
            <Switch>
-                   <Route path='/' exact component={ConnectedHome}></Route>
-                    <Route path='/search'  component={ConnectedSearch}></Route>
-               <Route path='/songlist/detail' exact component={ConnectedSongList}></Route>
+                   <Route path='/search'  component={ConnectedSearch}/>
+                <Route path='/songlist/detail' exact component={ConnectedSongList}/>
+               <Route path='/songcomment' exact component={SongComment}/>
+               <Route path='/album' exact component={ConnectedSongList}/>
+               <Route path='/' component={ConnectedHome}/>
            </Switch>
         </div>
     )

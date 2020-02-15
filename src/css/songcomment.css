@@ -1,0 +1,6 @@
+.songcomment-top{
+    padding: 2em 2em 0 2em;
+    display: flex;
+    flex-flow:row nowrap;
+    box-sizing: border-box;
+}

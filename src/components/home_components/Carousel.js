@@ -12,7 +12,7 @@ function toWhere(targetType,id) {
         case(1): //song /song/detail?ids=
             return '/';
         case(10): //album
-            return `/`;
+            return `/album?id=${id}`;
         case(100): //singer
             return `/`
         default:

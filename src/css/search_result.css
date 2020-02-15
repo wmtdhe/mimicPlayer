@@ -36,6 +36,12 @@
 .flex4{
     flex:1 1 19.5%;
 }
+.flex4 a, .flex3 a{
+    color:rgb(100,100,100)
+}
+.flex4 a:hover, .flex3 a:hover{
+    color:#000
+}
 .flex5{
     flex:1 1 8.8%
 }
@@ -48,11 +54,14 @@
 .even{
     background-color: rgb(245,245,247);
 }
-.focused{
+.focused div{
    background-color: rgb(227,227,229);
-    color:rgb(17,17,17)
+    color:rgb(17,17,17)!important;
+}
+.focused a{
+    color:#000!important;
 }
 
 .restricted{
-    color:rgb(164,153,164)!important;
+    color:rgb(164,153,164);
 }

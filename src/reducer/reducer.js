@@ -89,7 +89,7 @@ function progress(state=0,action) {
 function sublists(state=[],action) {
     switch (action.type) {
         case (SUBSCRIBE):
-            if(action.f){
+            if(action.f){ //f here means new subscribed songs -- will be added from start
                 let arr = state.map((v,i)=>v)
                 let p = 0
                 for(let j=0;j<arr.length;j++){
@@ -100,6 +100,11 @@ function sublists(state=[],action) {
                     }
                 }
                 arr.splice(p,0,action.playlist)
+                return arr
+            }
+            else if(action.c){
+                let arr = state.map((v)=>v)
+                arr.splice(1,0,action.playlist)
                 return arr
             }
             else{

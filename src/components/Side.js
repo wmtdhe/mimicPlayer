@@ -1,13 +1,13 @@
-import React, {useState,useEffect} from 'react';
+import React, {useState,useEffect,createRef} from 'react';
 import {Link} from 'react-router-dom';
 import {Icon} from 'antd';
-import '../css/side.css'
+import '../css/side.css';
+import {validate} from "./Search";
 
 const axios = require('axios')
 
-function SongList(props) {
-    return (<div></div>)
-}
+const locateRef = createRef()
+const inputRef = createRef()
 const RadioSvg = ()=>{
     return(
         <svg t="1581082284930" className="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"
@@ -28,12 +28,84 @@ const MusicSvg = ()=>{return(
 const RadioIcon = (props)=>(<Icon component={RadioSvg} />);
 const MusicIcon = (props)=>(<Icon component={MusicSvg}/>);
 
+function PlaylistMenu(props) {
+    function handleDelete(e) {
+        if(props.user==props.selected.userId){
+            axios.get(`/playlist/delete?id=${props.selected.id}`,{withCredentials:true})
+                .then(res=>{
+                    console.log(res.data)
+                    props.delete(props.id)
+                }).catch(err=>console.log(err))
+        }else{
+            axios.get(`/playlist/subscribe?t=2&id=${props.selected.id}`,{withCredentials: true})
+                .then(res=>{
+                    console.log(res.data)
+                    props.delete(props.id)
+                }).catch(err=>console.log(err))
+        }
+    }
+    function handlePlay(e,flag) {
+        axios.get(`/playlist/detail?id=${props.selected.id}`)
+            .then(res=>{
+                let songs = res.data.playlist.tracks
+                if(songs.length===0){
+                    return
+                }else{
+                    let ret = []
+                    axios.all(validate(res.data.playlist.trackIds))
+                        .then(axios.spread(function () {
+                            for(let i=0;i<arguments.length;i++){
+                                ret[i]=Object.assign({},
+                                    {name:songs[i].name,id:songs[i].id,duration:songs[i].dt,singer:songs[i].ar[0].name,albumId:songs[i].al.id,albumName:songs[i].al.name},
+                                    {valid:arguments[i]})
+                            }
+                            let playable = ret.filter((v,ii)=>{
+                                if(v.valid===200){
+                                    return true
+                                }
+                                else{return false}
+                            })
+                            if(flag){
+                                let nodup = [];
+                                let slen = props.songList.length
+                                for(let i=0;i<playable.length;i++){
+                                    let dup = false
+                                    for(let j=0;j<slen;j++){
+                                        if(playable[i].id===props.songList[j].id){
+                                            dup = true
+                                            break
+                                        }
+                                    }
+                                    if(!dup){
+                                        nodup.push(playable[i])
+                                    }
+                                }
+                                props.nextPlay(nodup,props.playing)
+                            }else{
+                                props.play(playable)
+                            }
+                        })).catch(err=>console.log(err))
+                }
+            }).catch(err=>console.log(err))
+    }
+
+    return <div className='playlist-menu' style={{left:`${props.locates[0]}px`,top:`${props.locates[1]}px`}}>
+            <div onClick={handlePlay}><Icon type="play-circle" style={{marginRight:'1em'}}/>播放</div>
+            <div onClick={(e)=>handlePlay(e,true)}><Icon type="right-square" style={{marginRight:'1em'}}/>下一首播放</div>
+            {props.id!==0 && <div onClick={handleDelete}><Icon type="delete" style={{marginRight:'1em'}}/>删除</div>}
+    </div>
+}
+
 function Side(props) {
     let [dropdown,switchList] = useState(true)
     let [subDrop,switchSubList] = useState(true)
     let [lists,activeList] = useState([1,0,0,0,0,0,0,0]) //default 7 categories
     let [subs,setSubs] = useState([])
     let [owns,setOwn] = useState([])
+    let [create,setCreate] = useState(false)
+    let [menu,setMenu] = useState(false)
+    let [locates,setLocate] = useState(null) //locate create box
+    let [locatem,locateMenu] = useState(null) //locate contextmenu
     useEffect(function () {
                     let s = []
                     let o = []
@@ -87,9 +159,37 @@ function Side(props) {
         activeList(newLists)
 
     }
-    // console.log('sub is ', subs)
+    function handleCreateBox(e) {
+        if(!props.status){
+            alert('需要登录')
+        }else{
+            let x = locateRef.current.getBoundingClientRect().x
+            let y = locateRef.current.getBoundingClientRect().y
+            let width = locateRef.current.getBoundingClientRect().width
+            setCreate(!create)
+            setLocate([x,width,y])
+        }
+    }
+    function handleCreate(e) {
+        if(!inputRef.current.value){
+            return
+        }else{
+            axios.get(`/playlist/create?name=${inputRef.current.value}`)
+                .then(res=>{
+                    props.create(Object.assign({},res.data.playlist,{own:true}),null,true)
+                    setCreate(false)
+                })
+                .catch(err=>console.log(err))
+        }
+    }
+    function playlistMenu(e) {
+        e.preventDefault()
+        console.log(e.target.id)
+        setMenu(true)
+        locateMenu([e.clientX,e.clientY,e.target.id])
+    }
     return(
-        <div className='side-frame'>
+        <div className='side-frame' onClick={(e)=>setMenu(false)}>
             <div className='recommend'>
                 <span>推荐</span>
                 <ul onClick={activeSec}>
@@ -107,19 +207,33 @@ function Side(props) {
                 </ul>
             </div>
             <div className='create-new'>
-                <div className='create-action'>
+                {menu && <PlaylistMenu locates={locatem} delete={props.delete} id={locatem[2]-6} selected={props.sublists[locatem[2]-6]} user={props.userId} play={props.play} nextPlay={props.nextPlay} playing={props.playing} songList={props.songList}/>}
+                {create &&
+                <div className='create-box' style={{left:`${locates[0]+locates[1]}px`,top:`${locates[2]-16}px`}}>
+                    <h3><strong>新建歌单</strong></h3>
+                    <input type="text" placeholder='请输入新的歌单' ref={inputRef}/>
+                    <div>
+                        <div style={{border:'1px solid rgb(12,115,194)',backgroundColor:'rgb(12,115,194)',color:'#fff'}} onClick={handleCreate}>创建</div>
+                        <div style={{border:'1px solid rgb(200,200,200)',backgroundColor:'#fff',color:'#000'}} onClick={(e)=>{setCreate(false)}}>取消</div></div>
+                </div>}
+                <div className='create-action' ref={locateRef}>
                     <span>创建新的歌单</span>
                     <span>
                         <span style={{paddingRight:'0.2em'}}  id='add-list'>
-                            <Icon type="plus-circle"   id='p'/>
+                            <Icon type="plus-circle"   id='p' onClick={handleCreateBox}/>
                         </span>
                         <span onClick={toggleList} id='toggle-list' >
                             <Icon type="down-circle"  id='d'/>
                         </span>
                     </span>
                 </div>
-                <ul style={{display:dropdown?"block":"none"}} onClick={activeSec}>
-                    <Link to='/lists/fav'><li className={lists[6]===1?'active':''} id={6}><Icon type="heart"/>&nbsp;&nbsp;我喜欢的音乐</li></Link>
+                <ul style={{display:dropdown?"block":"none"}} onClick={activeSec} onContextMenu={playlistMenu}>
+                    <Link to={`/songlist/detail?${props.sublists.length>0?'id='+props.sublists[0].id:''}`}><li className={lists[6]===1?'active':''} id={6}><Icon type="heart"/>&nbsp;&nbsp;我喜欢的音乐</li></Link>
+                    {owns.length>=2 && owns.slice(1).map((sublist,i)=>{
+                        return <Link to={`/songlist/detail?id=${sublist.id}`} key={i} id={'pl'+(7+i)}>
+                            <li className={`${lists[7+i]===1?'active':''} ellipsis`} id={7+i} title={sublist.name}><Icon type='unordered-list'/>&nbsp;&nbsp;{sublist.name}</li>
+                        </Link>
+                    })}
                 </ul>
             </div>
             {props.status && <div className='subscribed-songlist'>
@@ -131,10 +245,9 @@ function Side(props) {
                         </span>
                     </span>
                 </div>
-                <ul style={{display:subDrop?"block":"none"}} onClick={activeSec}>
-                    {/*<Link to='/lists/fav'><li className={lists[6]===1?'active':''}id={6}><Icon type="heart"/>我喜欢的音乐</li></Link>*/}
+                <ul style={{display:subDrop?"block":"none"}} onClick={activeSec} onContextMenu={playlistMenu}>
                     {subs && subs.map((sublist,i)=>{
-                        return <Link to={`/songlist/detail?id=${sublist.id}`} key={i} ><li className={`${lists[owns.length-1+6+i+1]===1?'active':''} ellipsis`} id={owns.length-1+6+i+1} title={sublist.name}><Icon type='unordered-list'/>&nbsp;&nbsp;{sublist.name}</li></Link>
+                        return <Link to={`/songlist/detail?id=${sublist.id}`} key={i} id={'pl'+(owns.length-1+6+i+1)}><li className={`${lists[owns.length-1+6+i+1]===1?'active':''} ellipsis`} id={owns.length-1+6+i+1} title={sublist.name}><Icon type='unordered-list'/>&nbsp;&nbsp;{sublist.name}</li></Link>
                     })}
                 </ul>
             </div>}

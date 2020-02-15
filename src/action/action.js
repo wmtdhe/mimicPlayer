@@ -83,11 +83,12 @@ function logOut() {
     }
 }
 
-function subscribe(playlist,f=false) {
+function subscribe(playlist,f=false,c=false) {
     return {
         type:SUBSCRIBE,
         playlist:playlist,
-        f:f //add from before/after
+        f:f, //add from before/after t - before, f - after
+        c:c //if create a playlist?
     }
 }
 function unsubscribe(id) {

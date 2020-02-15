@@ -61,6 +61,8 @@ function Player(props) {
     let [contextOn,setContext]=useState(false) //右键菜单
     let [view,setView]=useState(null)//当前右键选中的歌曲 - 播放列表中
     let [pos,setPos]=useState([])
+    let [count,setCount]=useState(null)//右键查看的歌曲的评论数
+    let [showList,setShow]=useState(false)
     useEffect(function () {
         if(props.songSrc){
             axios.get(`/song/url?id=${props.songSrc.id}`)
@@ -200,22 +202,17 @@ function Player(props) {
         let ni = (props.songIndex+1)===props.songList.length?0:props.songIndex+1
         props.playSong(null,ni)
     }
-    function handleRightClick(e) {
+    function handleRightClick(e,id) {
         e.preventDefault();
         setContext(true)
-        // console.log(e.target)
-        // console.log(e.clientX)
-        // console.log(e.clientY)
         setView(Number(e.currentTarget.id.slice(1)))
         let playlist = document.querySelector('.playlist-songs')
-        // let contextMenu = document.querySelector('.contextmenu-box')
         let x = e.clientX - playlist.getBoundingClientRect().x + 10
         let y = e.clientY - playlist.getBoundingClientRect().y - 10
+        axios.get(`/comment/music?id=${id}`).then(res=>{
+            setCount(res.data.total)
+        }).catch(err=>{console.log(err)})
         setPos([x,y])
-        // console.log('x ',x)
-        // console.log('y ',y)
-        // contextMenu.style.left = x+'px'
-        // contextMenu.style.top = y+'px'
     }
     function deleteOne(e,i) {
         if(i<props.songIndex){
@@ -240,7 +237,15 @@ function Player(props) {
             return
         }
     }
-    console.log('playing is ',props.songIndex)
+    function addToPlaylist(e) {
+        let pid = e.target.getAttribute('pid')
+        let tracks = e.target.getAttribute('tracks')
+        axios.get(`/playlist/tracks?op=add&pid=${pid}&tracks=${tracks}`)
+            .then(res=>{
+                console.log(res.data)
+            })
+            .catch(err=>{console.log(err)})
+    }
     return (<div className='player-frame'>
         {props.songSrc && <Preview info={props.songSrc} url={songSrc} openSongPage={props.openSongPage}/>}
         <audio ref={songRef} onTimeUpdate={Playing} onCanPlay={setUp} onEnded={handleEnd} onCanPlayCapture={load} id='current-song' src={songSrc}>
@@ -282,12 +287,23 @@ function Player(props) {
             </div>
             <div className='playlist-songs'>
                 {props.songList.map((v,i)=>{
-                    return <div className='playlist-summary hoverable' key={i} onDoubleClick={(e)=>{props.playSong(props.songList[i],i)}} id={`p${i}`} onContextMenu={handleRightClick}>
+                    return <div className='playlist-summary hoverable' key={i} onDoubleClick={(e)=>{props.playSong(props.songList[i],i)}} id={`p${i}`} onContextMenu={(e)=>handleRightClick(e,props.songList[i].id)}>
                         {contextOn && view===i && <div className='contextmenu-box' style={{top:`${pos[1]}px`,left:`${pos[0]}px`}}>
-                            <div><Icon type="message" style={{marginRight:'1em'}}/>查看评论{}</div>
+                            <div><Link to={`/songcomment?id=${v.id}`}><Icon type="message" style={{marginRight:'1em'}}/>查看评论({count})</Link></div>
                             <div onClick={(e)=>{props.playSong(null,i)}} style={{borderBottom:'1px solid rgb(238,238,238)'}}><Icon type="play-circle" style={{marginRight:'1em'}}/>播放</div>
                             <div><Icon type="customer-service" style={{marginRight:'1em'}}/>专辑</div>
                             <div style={{borderBottom:'1px solid rgb(238,238,238)'}}><Icon type="user" style={{marginRight:'1em'}}/>歌手</div>
+                            <div onMouseEnter={(e)=>setShow(true)} onMouseLeave={(e)=>setShow(false)} style={{position:'relative'}}>
+                                <Icon type='folder-add' style={{marginRight:'1em'}}/>收藏到歌单
+                                { showList && <div className='available-list' onClick={addToPlaylist}>
+                                    {props.ownList.map((list,index)=>{
+                                        return <div key={index} style={{borderTop:`${i!==0?'1px solid rgb(238,238,238)':''}`}} pid={list.id} tracks={v.id}>
+                                            <Icon type='unordered-list' style={{marginRight:'1em'}}/>{list.name}
+                                        </div>
+                                    })}
+
+                                </div>}
+                            </div>
                             <div onClick={(e)=>deleteOne(e,i)}><Icon type="delete" style={{marginRight:'1em'}}/>从列表中删除</div>
                         </div>}
                         <div style={{position:'relative'}}>

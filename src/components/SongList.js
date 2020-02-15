@@ -1,8 +1,10 @@
-import React,{useState, createRef} from 'react';
+import React, {useState, createRef, useEffect} from 'react';
 import {Link, Switch,Route} from 'react-router-dom';
 import '../css/songlist.css';
 import {Icon} from "antd";
 import {validate} from "./Search";
+import {Comments, Pagination} from "./CurrentSong";
+
 import Toast from "./Toast";
 
 const axios = require('axios')
@@ -51,8 +53,18 @@ function highlightKeywords(index,arr,str,ret,rlen) {
     }
 }
 
+function getAlbumInfo(search) {
+    return axios.get(`/album${search}`,{withCredentials:true}).then(res=>res.data).catch(err=>console.log(err))
+}
+function getDynamicInfo(search) {
+    return axios.get(`/album/detail/dynamic${search}`,{withCredentials:true}).then(res=>res.data).catch(err=>console.log(err))
+}
+
 function List(props) {
     let [focus,setFocus]=useState(null)
+    console.log(props.tracks)
+    console.log(props.songs[0])
+    console.log(!props.searching)
     function focused(e,index) {
         setFocus(index)
         e.stopPropagation()
@@ -93,8 +105,8 @@ function List(props) {
                     <div className='flex1' style={{textAlign:'right'}}>{`${i+1<=9?'0'+(i+1):i+1}`}</div>
                     <div className='flex1'>{}</div>
                     <div className={`flex2 ${props.songs[i].valid===404?'restricted':'valid-song'}`}>{v.name}</div>
-                    <div className='flex3'>{v.ar[0].name}</div>
-                    <div className='flex4'>{v.al.name}</div>
+                    <div className='flex3'><Link to={`/singer?id=${v.ar[0].id}`}>{v.ar[0].name}</Link></div>
+                    <div className='flex4'><Link to={`/album?id=${v.al.id}`}>{v.al.name}</Link></div>
                     <div className='flex5'>{computeDuration(v.dt/1000)}</div>
                 </div>
             })
@@ -116,14 +128,66 @@ function List(props) {
         }
     </div>)
 }
-function Comments(props) {
-    return <div>
-        Comments
-    </div>
-}
 function Archived(props) {
     return <div>
         Archived
+    </div>
+}
+function Comment(props) {
+    let [comment,setComment] = useState(null)
+    let [page,setPage] = useState(1)
+    useEffect(function () {
+        axios.get(`/comment/album${props.search}&offset=${(page-1)*50}&limit=50`,{withCredentials:true})
+            .then(res=>{
+                setComment(res.data)
+            })
+            .catch(err=>console.log(err))
+    },[props.search,page])
+    function switchPage(e) {
+        let count = Math.ceil(comment.total/50)
+        let newPage = Number(e.target.getAttribute('index'));
+        let nav= e.target.getAttribute('nav')
+        console.log(e.target)
+        console.log(nav)
+        if(nav==='p'){
+            if(page===1){return}
+            else{
+                setPage(page-1)
+                document.querySelector('.latest-c').scrollIntoView()
+            }
+        }
+        if(nav==='n'){
+            if(page===count){return}
+            else{setPage(page+1)}
+            document.querySelector('.latest-c').scrollIntoView()
+        }
+        if(newPage<1 || newPage>(count)){
+            return;
+        }
+        setPage(newPage)
+        document.querySelector('.latest-c').scrollIntoView()
+    }
+    return (comment? <div style={{padding:'2em'}}>
+            <div className='comment-box'>comment box</div>
+            {comment.hotComments && <div className='hot-c'>
+                <div style={{marginBottom:'0.5em'}}>精彩评论</div>
+                <Comments comments={comment.hotComments.slice(0,10)}/>
+            </div>}
+            <div className='latest-c'>
+                <div style={{marginBottom:'0.5em'}}>最新评论（{comment.total}）</div>
+                <Comments comments={comment.comments}/>
+            </div>
+            <div className='pagination' onClick={switchPage}>
+                <div nav='p' style={{boxSizing:'border-box',border:'1px solid rgb(194,194,196)',padding:'0 0.5em 0 0.5em',marginRight:'0.5em'}} className={page===1?'disabled':'on-hover'}>&lt;</div>
+                <Pagination count={comment.total} page={page} limit={50}/>
+                <div nav='n' style={{boxSizing:'border-box',border:'1px solid rgb(194,194,196)',padding:'0 0.5em 0 0.5em',marginLeft:'0.5em'}} className={page===Math.ceil(comment.total/20)?'disabled':'on-hover'}>&gt;</div>
+            </div>
+        </div>:(<div>Loading</div>))
+}
+function Detail(props) {
+    return <div style={{padding:'2em'}}>
+        <h2>专辑介绍</h2>
+        <div>{props.description}</div>
     </div>
 }
 //${props.songs[i].valid===404?'restricted':''}
@@ -150,7 +214,9 @@ class SongList extends React.Component {
             search:'',
             t:null, //subscribe type0
             searchSongs:[],
-            searching:false
+            searching:false,
+            type:null, // 1 for album, 2 for playlist
+            album:null
         }
         this.changeDropdown = this.changeDropdown.bind(this);
         this.playAllSong = this.playAllSong.bind(this);
@@ -168,6 +234,7 @@ class SongList extends React.Component {
                 }
                 else{return false}
             });
+            this.props.cleanList()
             this.props.dbClick(playable,0)
         }else{
             return
@@ -255,7 +322,10 @@ class SongList extends React.Component {
     }
     componentDidUpdate(prevProps, prevState, snapshot) {
         // console.log(prevProps.location.search,' ----componentUpdate里面的 ',this.props.location.search)
-        if(prevProps.location.search!==this.props.location.search){
+
+        if(prevProps.location.search!==this.props.location.search && prevProps.location.pathname==='/songlist/detail' && this.props.location.pathname==='/songlist/detail'){
+            console.log('111')
+            this.setState({songs:null,songListObj:null})
             axios.get(`/playlist/detail${this.props.location.search}`,{withCredentials:true})
                 .then(res=>{
                     let songs = res.data.playlist.tracks
@@ -273,18 +343,117 @@ class SongList extends React.Component {
                                     return v.id !== res.data.playlist.id
                                 })
                                 if(unsub){
-                                    that.setState({songs:ret,songListObj:res.data.playlist,t:false})
+                                    that.setState({songs:ret,songListObj:res.data.playlist,t:false,type:2})
                                 }else{
-                                    that.setState({songs:ret,songListObj:res.data.playlist,t:true})
+                                    that.setState({songs:ret,songListObj:res.data.playlist,t:true,type:2})
                                 }
                             }
                             else{
-                                that.setState({songs:ret,songListObj:res.data.playlist,t:false})
+                                that.setState({songs:ret,songListObj:res.data.playlist,t:false,type:2})
                             }
                             })
                         ).catch(err=>console.log(err))
                 })
                 .catch(err=>{console.log(err)})
+        }
+        if(prevProps.location.search!==this.props.location.search && prevProps.location.pathname==='/album' && this.props.location.pathname==='/album'){
+            console.log('222')
+            this.setState({songs:null,songListObj:null})
+            axios.get(`/album${this.props.location.search}`,{withCredentials:true}).then(res=>{
+                let songs = res.data.songs
+                let ret = []
+                let that = this
+                axios.all(validate(songs))
+                    .then(axios.spread(function(){
+                        for(let i=0;i<arguments.length;i++){
+                            ret[i]=Object.assign({},
+                                {name:songs[i].name,id:songs[i].id,duration:songs[i].dt,singer:songs[i].ar[0].name,albumId:songs[i].al.id,albumName:songs[i].al.name},
+                                {valid:arguments[i]})
+                        }
+                        that.setState({songs:ret,songListObj:res.data.songs,type:1,album:res.data.album})
+                        // if(that.props.status){
+                        //     let unsub = that.props.sublist.every((v,i)=>{
+                        //         return v.id !== res.data.playlist.id
+                        //     })
+                        //     if(unsub){
+                        //         that.setState({songs:ret,songListObj:res.data.playlist,t:false})
+                        //     }else{
+                        //         that.setState({songs:ret,songListObj:res.data.playlist,t:true})
+                        //     }
+                        // }
+                        // else{
+                        //     that.setState({songs:ret,songListObj:res.data.playlist,t:false})
+                        // }
+                    }))
+                    .catch(err=>console.log(err))
+            }).catch(err=>console.log(err))
+        }
+        if(prevProps.location.pathname!==this.props.location.pathname){
+            if(this.props.location.pathname==='/album'){
+                console.log('333')
+                this.setState({songs:null,songListObj:null})
+                axios.get(`/album${this.props.location.search}`,{withCredentials:true}).then(res=>{
+                    let songs = res.data.songs
+                    let ret = []
+                    let that = this
+                    axios.all(validate(songs))
+                        .then(axios.spread(function(){
+                            for(let i=0;i<arguments.length;i++){
+                                ret[i]=Object.assign({},
+                                    {name:songs[i].name,id:songs[i].id,duration:songs[i].dt,singer:songs[i].ar[0].name,albumId:songs[i].al.id,albumName:songs[i].al.name},
+                                    {valid:arguments[i]})
+                            }
+                            that.setState({songs:ret,songListObj:res.data.songs,type:1,album:res.data.album})
+                            // if(that.props.status){
+                            //     let unsub = that.props.sublist.every((v,i)=>{
+                            //         return v.id !== res.data.playlist.id
+                            //     })
+                            //     if(unsub){
+                            //         that.setState({songs:ret,songListObj:res.data.playlist,t:false})
+                            //     }else{
+                            //         that.setState({songs:ret,songListObj:res.data.playlist,t:true})
+                            //     }
+                            // }
+                            // else{
+                            //     that.setState({songs:ret,songListObj:res.data.playlist,t:false})
+                            // }
+                        }))
+                        .catch(err=>console.log(err))
+                }).catch(err=>console.log(err))
+            }
+            else{
+                console.log('444')
+                this.setState({songs:null,songListObj:null})
+                axios.get(`/playlist/detail${this.props.location.search}`,{withCredentials:true})
+                    .then(res=>{
+                        let songs = res.data.playlist.tracks
+                        let ret = []
+                        let that = this
+                        axios.all(validate(res.data.playlist.trackIds))
+                            .then(axios.spread(function () { //=> equal to .then(result=>{})? result is an array
+                                    for(let i=0;i<arguments.length;i++){
+                                        ret[i]=Object.assign({},
+                                            {name:songs[i].name,id:songs[i].id,duration:songs[i].dt,singer:songs[i].ar[0].name,albumId:songs[i].al.id,albumName:songs[i].al.name},
+                                            {valid:arguments[i]})
+                                    }
+                                    if(that.props.status){
+                                        let unsub = that.props.sublist.every((v,i)=>{
+                                            return v.id !== res.data.playlist.id
+                                        })
+                                        if(unsub){
+                                            that.setState({songs:ret,songListObj:res.data.playlist,t:false,type:2})
+                                        }else{
+                                            that.setState({songs:ret,songListObj:res.data.playlist,t:true,type:2})
+                                        }
+                                    }
+                                    else{
+                                        that.setState({songs:ret,songListObj:res.data.playlist,t:false,type:2})
+                                    }
+                                })
+                            ).catch(err=>console.log(err))
+                    })
+                    .catch(err=>{console.log(err)})
+            }
         }
         if(prevProps.sublist!==this.props.sublist){
             if(!this.props.status){this.setState({t:false})}
@@ -305,47 +474,81 @@ class SongList extends React.Component {
 
     componentDidMount() {
         // this.setState({search:'a'})
-        axios.get(`/playlist/detail${this.props.location.search}`,{withCredentials:true})
-            .then(res=>{
-                let songs = res.data.playlist.tracks
+        if(this.props.location.pathname==='/album'){
+            axios.get(`/album${this.props.location.search}`,{withCredentials:true}).then(res=>{
+                let songs = res.data.songs
                 let ret = []
+                let trackIds = songs.map((v,i)=>{return v.id})
                 let that = this
-                axios.all(validate(res.data.playlist.trackIds))
-                    .then(axios.spread(function () { //=> equal to .then(result=>{})? result is an array
-                            for(let i=0;i<arguments.length;i++){
-                                ret[i]=Object.assign({},
-                                    {name:songs[i].name,id:songs[i].id,duration:songs[i].dt,singer:songs[i].ar[0].name,albumId:songs[i].al.id,albumName:songs[i].al.name},
-                                    {valid:arguments[i]})
-                            }
-                            if(that.props.status){
-                                let unsub = that.props.sublist.every((v,i)=>{
-                                    return v.id !== res.data.playlist.id
-                                })
-                                if(unsub){
-                                    that.setState({songs:ret,songListObj:res.data.playlist,t:false})
-                                }else{
-                                    that.setState({songs:ret,songListObj:res.data.playlist,t:true})
+                axios.all(validate(songs))
+                    .then(axios.spread(function(){
+                        for(let i=0;i<arguments.length;i++){
+                            ret[i]=Object.assign({},
+                                {name:songs[i].name,id:songs[i].id,duration:songs[i].dt,singer:songs[i].ar[0].name,albumId:songs[i].al.id,albumName:songs[i].al.name},
+                                {valid:arguments[i]})
+                        }
+                        that.setState({songs:ret,songListObj:res.data.songs,type:1,album:res.data.album})
+                        // if(that.props.status){
+                        //     let unsub = that.props.sublist.every((v,i)=>{
+                        //         return v.id !== res.data.playlist.id
+                        //     })
+                        //     if(unsub){
+                        //         that.setState({songs:ret,songListObj:res.data.playlist,t:false})
+                        //     }else{
+                        //         that.setState({songs:ret,songListObj:res.data.playlist,t:true})
+                        //     }
+                        // }
+                        // else{
+                        //     that.setState({songs:ret,songListObj:res.data.playlist,t:false})
+                        // }
+                    }))
+                    .catch(err=>console.log(err))
+            }).catch(err=>console.log(err))
+        }
+        else{
+            axios.get(`/playlist/detail${this.props.location.search}`,{withCredentials:true})
+                .then(res=>{
+                    let songs = res.data.playlist.tracks
+                    let ret = []
+                    let that = this
+                    axios.all(validate(res.data.playlist.trackIds))
+                        .then(axios.spread(function () { //=> equal to .then(result=>{})? result is an array
+                                for(let i=0;i<arguments.length;i++){
+                                    ret[i]=Object.assign({},
+                                        {name:songs[i].name,id:songs[i].id,duration:songs[i].dt,singer:songs[i].ar[0].name,albumId:songs[i].al.id,albumName:songs[i].al.name},
+                                        {valid:arguments[i]})
                                 }
-                            }
-                            else{
-                                that.setState({songs:ret,songListObj:res.data.playlist,t:false})
-                            }
-                        })
-                    ).catch(err=>console.log(err))
-            })
-            .catch(err=>{console.log(err)})
+                                if(that.props.status){
+                                    let unsub = that.props.sublist.every((v,i)=>{
+                                        return v.id !== res.data.playlist.id
+                                    })
+                                    if(unsub){
+                                        that.setState({songs:ret,songListObj:res.data.playlist,t:false,type:2})
+                                    }else{
+                                        that.setState({songs:ret,songListObj:res.data.playlist,t:true,type:2})
+                                    }
+                                }
+                                else{
+                                    that.setState({songs:ret,songListObj:res.data.playlist,t:false,type:2})
+                                }
+                            })
+                        ).catch(err=>console.log(err))
+                })
+                .catch(err=>{console.log(err)})
+        }
 
     }
     changeDropdown(){
         this.setState({dropdown:!this.state.dropdown})
     }
     render(){
+        // console.log(this.props.sublist)
             let currentLocation = this.props.location.pathname+this.props.location.search
             let location = `/${this.props.location.hash.slice(1)}`
         console.log('render里面的',this.props.location.hash)
         // console.log(location)
             return((this.state.songListObj && this.state.songs)?<div className='songlist-frame'>
-                <div className='songlist-top' style={{padding:'2em 2em 0 2em',position:'relative'}}>
+                {this.state.type===2 && this.state.songListObj.creator && <div className='songlist-top' style={{padding:'2em 2em 0 2em',position:'relative'}}>
                     <div className='listinfo'>
                         <span style={{paddingRight:'1em'}}><div>歌曲数</div><div style={{textAlign:'right'}}><strong>{this.state.songListObj.trackCount}</strong></div></span>
                         <span style={{borderLeft:'1px solid #eee',paddingLeft:'1em'}}><div>播放数</div><div style={{textAlign:'right'}}><strong>{toCount(this.state.songListObj.playCount)}</strong></div></span>
@@ -372,33 +575,56 @@ class SongList extends React.Component {
                             </div>
                             <div className='tags'>
                                 <span>标签：</span>{this.state.songListObj.tags.map((tag,i,arr)=>{
-                                    if(i===arr.length-1){
-                                        return <span key={i}><Link to='/'>{tag}</Link></span>
-                                    }
-                                    return <span key={i}><Link to='/'>{tag}</Link> / </span>
+                                if(i===arr.length-1){
+                                    return <span key={i}><Link to='/'>{tag}</Link></span>
+                                }
+                                return <span key={i}><Link to='/'>{tag}</Link> / </span>
                             })}
                             </div>
                             <div className='descriptions'>
                                 <div onClick={this.changeDropdown} id='dropdown'>
                                     {this.state.dropdown?<Icon type='up'/>:<Icon type='down'/>  }
                                 </div>
-                                <span id={this.state.dropdown?'':'jianjie'}>简介：{this.state.songListObj.description.split(/\s/).map((v,i)=>{
-                                return (<div key={i}>{v}<br/></div>)
-                            })}</span></div>
+                                <span id={this.state.dropdown?'':'jianjie'}>简介：{this.state.songListObj.description && this.state.songListObj.description.split(/\s/).map((v,i)=>{
+                                    return (<div key={i}>{v}<br/></div>)
+                                })}</span></div>
                         </div>
                     </div>
-                    <div className='songlist-nav'>
-                            <span className='songlist-search'><input type="text" placeholder='搜索歌单音乐' onChange={this.handleSearch}/><Icon type='search'/></span>
-                            <div className={this.props.location.hash==''?'nav-active':''}><Link to={currentLocation} >歌曲列表</Link></div>
-                            <div className={this.props.location.hash=='#comments'?'nav-active':''}><Link to={currentLocation+'#comments'}>评论({this.state.songListObj.commentCount})</Link></div>
-                            <div className={this.props.location.hash=='#archived'?'nav-active':''}><Link to={currentLocation+'#archived'} >收藏者</Link></div>
+
+                </div>}
+                {this.state.type===1 &&
+                <div className='songlist-top' style={{padding:'2em 2em 0 2em',position:'relative'}}>
+                    <div style={{display:'flex',flexFlow:'row nowrap'}}>
+                        <div style={{width:'15.6em',height:'15.6em',flex:'0 0 22%'}}>
+                            <img src={this.state.album.picUrl} alt="" style={{height:'100%',width:'100%'}}/>
+                        </div>
+                        <div className='album-headline'>
+                            <h2 style={{paddingLeft:'2em',width:'80%'}}>&nbsp;{this.state.album.name}</h2>
+                            <div className='operations'>
+                                <div style={{backgroundColor:'rgb(198,47,47)',borderRadius:'3px'}}>
+                                    <span id='playall'><Link to='/' style={{color:'white'}} onClick={this.playAllSong}><Icon type="play-circle" style={{paddingRight:'0.3em'}}/><span>播放全部</span></Link></span>
+                                    <span id='addall'><Link to='/' style={{color:'white'}} onClick={this.addAllSong}><Icon type="plus"/></Link></span>
+                                </div>
+                                <div id='archive'><Link to='/' style={{color:'black'}} onClick={this.handleSubscribe}><Icon type="folder-add"style={{paddingRight:'0.3em'}} /><span>{this.state.t&&<span>已</span>}收藏{`(${this.state.songListObj.subscribedCount})`}</span></Link></div>
+                                <div id='share'><Link to='/' style={{color:'black'}}><Icon type="export" style={{paddingRight:'0.3em'}}/><span>分享{`(${this.state.album.info.shareCount})`}</span></Link></div>
+                                <div id='download'><Link to='/' style={{color:'black'}}><Icon type="download" style={{paddingRight:'0.3em'}}/><span>下载全部</span></Link></div>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                }
+                <div className='songlist-nav'>
+                    {this.props.location.hash=='' && <span className='songlist-search'><input type="text" placeholder='搜索歌单音乐' onChange={this.handleSearch}/><Icon type='search'/></span>}
+                    <div className={this.props.location.hash==''?'nav-active':''}><Link to={currentLocation} >歌曲列表</Link></div>
+                    <div className={this.props.location.hash=='#comments'?'nav-active':''}><Link to={currentLocation+'#comments'}>评论({this.state.type===2?this.state.songListObj.commentCount:this.state.album.info.commentCount})</Link></div>
+                    {this.state.type===2 && <div className={this.props.location.hash=='#archived'?'nav-active':''}><Link to={currentLocation+'#archived'} >收藏者</Link></div>}
+                    {this.state.type===1 && <div className={this.props.location.hash=='#detail'?'nav-active':''}><Link to={currentLocation+'#detail'} >专辑详情</Link></div>}
                 </div>
                 <div className='songlist-bottom'>
                     <Switch location={{pathname:location}}>
-                        <Route path='/'  exact ><List tracks={this.state.songListObj.tracks} playAll={this.props.dbClick} songs={this.state.songs} len={this.props.songListLen} cur={this.props.playing} playExisting={this.props.playExistingSong} songList={this.props.songList} cleanList={this.props.cleanList} searched={this.state.searchSongs} searching={this.state.searching}/></Route>
-                        <Route path='/comments' exact component={Comments}></Route>
-                        <Route path='/archived'   exact component={Archived}></Route>
+                        <Route path='/'  exact ><List tracks={this.state.type===2?this.state.songListObj.tracks:this.state.songListObj} playAll={this.props.dbClick} songs={this.state.songs} len={this.props.songListLen} cur={this.props.playing} playExisting={this.props.playExistingSong} songList={this.props.songList} cleanList={this.props.cleanList} searched={this.state.searchSongs} searching={this.state.searching}/></Route>
+                        <Route path='/comments' exact component={(props)=><Comment {...props} search={this.props.location.search}/>}></Route>
+                        {this.state.type && <Route path={this.state.type===1?'/detail':`/archived`}   exact component={this.state.type===1?(props)=><Detail description={this.state.album.description} {...props}/>:Archived}></Route>}
                     </Switch>
                 </div>
             </div>:(<div style={{textAlign:'center',position:'absolute',top:'50%',left:'50%',transform:'translate(0,-50%)',fontSize:'3em'}}>
