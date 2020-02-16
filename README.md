@@ -1,6 +1,6 @@
 # mimicPlayer
 ## 基本介绍
-用React做的仿网易云音乐播放器。
+用React做的网页版网易云音乐客户端。
 ## 使用工具
 * <code>React</code>
 * <code>React-Router</code>
