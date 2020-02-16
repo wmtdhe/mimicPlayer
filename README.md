@@ -17,5 +17,8 @@
 * 播放列表 - 播放/收藏(需要登录)&删除歌曲/查看评论/本地保存播放列表中的歌曲
 ## 使用方法
 * server-side请参考上述使用工具中的repository
-* 本地
-  > npm run dev 打开development mode
+> git clone https://github.com/wmtdhe/mimicPlayer.git <br>
+> development mode: <br>
+> npm run dev <br>
+> production mode: <br>
+> npm run build <br>
