@@ -20,8 +20,12 @@
 <code>server-side</code>请参考上述使用工具中的repository
 ```
 git clone https://github.com/wmtdhe/mimicPlayer.git
+
 development mode: 
+
 npm run dev
+
 production mode:
+
 npm run build
 ```
