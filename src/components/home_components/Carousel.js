@@ -99,8 +99,10 @@ class Carousel extends React.Component{
         this.autoTick = this.autoTick.bind(this)
     }
     showNav(){
-        this.setState({show:true})
+
         clearInterval(this.state.timer)
+        this.setState({show:true,timer:null})
+
     }
     hideNav(){
         let t = this.autoTick()
@@ -108,20 +110,25 @@ class Carousel extends React.Component{
     }
     NavTo(e){
         if(e.target.tagName!=='LI')return
-        console.log(e.target.innerText)
-        this.setState({activated:Number(e.target.innerText)})
-        e.stopPropagation()
+        else{
+            console.log(e.target.innerText)
+            clearInterval(this.state.timer)
+            this.setState({activated:Number(e.target.innerText),timer:null})
+            e.stopPropagation()
+        }
     }
     autoTick(){
          return setInterval(()=>{
-            let len = this.props.banners.length
-            this.setState({activated:(this.state.activated+1===len)?0:this.state.activated+1})
-        },3000)
+            this.setState({activated:(this.state.activated+1===this.props.banners.length)?0:this.state.activated+1})
+        },5000)
     }
     componentDidUpdate(prevProps, prevState, snapshot) {
         // clearInterval(prevState.timer)
         // let t = this.autoTick()
         // this.setState({timer:t})
+        if(prevState.timer && prevState.timer!==this.state.timer){
+            clearInterval(prevState.timer)
+        }
     }
 
     componentDidMount() {
@@ -130,14 +137,13 @@ class Carousel extends React.Component{
     }
     componentWillUnmount() {
         clearInterval(this.state.timer)
-        // clearInterval(t)
     }
 
 
     render(){
         let len = this.props.banners.length
         return(<div className='carousel-frame' >
-            <div className='main-carousel' onMouseEnter={this.showNav} onMouseLeave={this.hideNav}>
+            <div className='main-carousel' onMouseOver={this.showNav} onMouseOut={this.hideNav}>
                 <div className='prev' style={{opacity:`${this.state.show?1:0}`}} onClick={(e)=>{this.setState({activated:this.state.activated-1>0?this.state.activated-1:len-1})}}><Icon type='left' style={{color:'rgb(200,200,200)',width:'2em',height:'2em'}}/></div>
                 <ul className='carousel-img'>
                     {
@@ -147,7 +153,8 @@ class Carousel extends React.Component{
                 <div className='next' style={{opacity:`${this.state.show?1:0}`}} onClick={(e)=>{this.setState({activated:this.state.activated+1<len?this.state.activated+1:0})}}><Icon type='right' style={{color:'rgb(200,200,200)',width:'2em',height:'2em'}}/></div>
             </div>
             <div className='dot-nav'>
-                <ul onMouseOver={this.NavTo}>
+                <ul onMouseOver={this.NavTo} onMouseOut={(e)=>{let t = this.autoTick();
+                    this.setState({timer:t})}}>
                     {
                         this.props.banners && <NavList len={this.props.banners.length} active={this.state.activated}></NavList>
                     }

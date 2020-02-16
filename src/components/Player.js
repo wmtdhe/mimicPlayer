@@ -204,14 +204,14 @@ function Player(props) {
     }
     function handleRightClick(e,id) {
         e.preventDefault();
-        setContext(true)
-        setView(Number(e.currentTarget.id.slice(1)))
-        let playlist = document.querySelector('.playlist-songs')
-        let x = e.clientX - playlist.getBoundingClientRect().x + 10
-        let y = e.clientY - playlist.getBoundingClientRect().y - 10
+        setContext(true);
+        setView(Number(e.currentTarget.id.slice(1)));
+        let playlist = document.querySelector('.playlist-songs');
+        let x = e.clientX - playlist.getBoundingClientRect().x + 10;
+        let y = e.clientY>540?(e.clientY - playlist.getBoundingClientRect().y - 150):(e.clientY - playlist.getBoundingClientRect().y - 10);
         axios.get(`/comment/music?id=${id}`).then(res=>{
             setCount(res.data.total)
-        }).catch(err=>{console.log(err)})
+        }).catch(err=>{console.log(err)});
         setPos([x,y])
     }
     function deleteOne(e,i) {
@@ -272,7 +272,7 @@ function Player(props) {
         <div className='playlist-button' style={{cursor:'pointer'}} onClick={locateCurrent}>
             <Icon type="unordered-list" />
         </div>
-        <div className='playlist' style={{display:open?'block':'none'}} onClick={(e)=>{setContext(false)}}>
+        <div className='playlist' style={{display:open?'block':'none'}} onClick={(e)=>{setContext(false);e.stopPropagation()}}>
             <div className='playlist-nav'>
                 <div style={{cursor:'pointer',borderRadius:'5px 0 0 5px',color:'rgb(124,125,133)',backgroundColor:'white',padding:'0.5em 2em 0.5em 2em'}} className={`${section===0?'active-playlist-nav':''}`}>播放列表</div>
                 <div style={{cursor:'pointer',borderRadius:'0 5px 5px 0',color:'rgb(124,125,133)',backgroundColor:'white',padding:'0.5em 2em 0.5em 2em'}} className={`${section===1?'active-playlist-nav':''}`}>历史记录</div>
@@ -291,7 +291,7 @@ function Player(props) {
                         {contextOn && view===i && <div className='contextmenu-box' style={{top:`${pos[1]}px`,left:`${pos[0]}px`}}>
                             <div><Link to={`/songcomment?id=${v.id}`}><Icon type="message" style={{marginRight:'1em'}}/>查看评论({count})</Link></div>
                             <div onClick={(e)=>{props.playSong(null,i)}} style={{borderBottom:'1px solid rgb(238,238,238)'}}><Icon type="play-circle" style={{marginRight:'1em'}}/>播放</div>
-                            <div><Icon type="customer-service" style={{marginRight:'1em'}}/>专辑</div>
+                            <div><Link to={`/album?id=${v.albumId}`}><Icon type="customer-service" style={{marginRight:'1em'}}/>专辑</Link></div>
                             <div style={{borderBottom:'1px solid rgb(238,238,238)'}}><Icon type="user" style={{marginRight:'1em'}}/>歌手</div>
                             <div onMouseEnter={(e)=>setShow(true)} onMouseLeave={(e)=>setShow(false)} style={{position:'relative'}}>
                                 <Icon type='folder-add' style={{marginRight:'1em'}}/>收藏到歌单

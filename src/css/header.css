@@ -3,16 +3,19 @@
     flex-flow: row nowrap;
     background-color: rgb(198,47,47);
     align-items: center;
-    justify-content: space-evenly;
+    justify-content: space-between;
     height: 7vh;
     width: 100%;
     min-width: 1277px;
     box-sizing: border-box;
-    /*text-decoration: none;*/
+    padding: 0 2em;
+}
+.header-frame>a{
+    flex:0 0 30%;
 }
 .header-frame h1{
     color:#ffffff;
-    text-indent: 1.5em;
+    padding-top:0.3em;
 }
 .header-frame a{
     text-decoration: none;
@@ -23,6 +26,7 @@
     justify-content: center;
     align-items: center;
     position: relative;
+    flex:0 0 30%;
 }
 
 
@@ -77,5 +81,7 @@
     display: flex;
     flex-flow: row nowrap;
     align-items:center;
+    flex:0 0 30%;
+    justify-content: right;
 }
 /* #fff  (209,88,88)*/

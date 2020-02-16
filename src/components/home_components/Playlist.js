@@ -11,7 +11,6 @@ function Playlist(props) {
     let [page,setPage] = useState(1)
     let [len,setLen] =useState(null)
     let [hot,setHot] = useState(null)
-    let [current,setCurrent] = useState('全部')
     let [catList,switchCatList] = useState(false)
     let [subs,setSub] = useState(null)
     useEffect(function () {
@@ -57,6 +56,7 @@ function Playlist(props) {
         // document.querySelector('.latest-c').scrollIntoView()
     }
     function showCat(e) {
+        e.stopPropagation()
         switchCatList(!catList)
         axios.get(`/playlist/catlist`,{withCredentials: true})
             .then(res=>{
@@ -74,11 +74,11 @@ function Playlist(props) {
             .catch(err=>console.log(err))
     }
     console.log(props.location.search.slice(5))
-    return (playlists?<div className='playlist-frame-box'>
+    return (playlists?<div className='playlist-frame-box' onClick={(e)=>{switchCatList(false)}}>
         <div className='tag-select' onClick={showCat}>
             {props.location.search?decodeURI(props.location.search.slice(5)):'全部歌单'}<Icon type={`${!catList?'down':''}${(catList && !subs)?'loading':''}${(catList && subs)?'down':''}`} style={{marginLeft:'0.2em',fontSize:'0.8em'}}/>
         </div>
-        {catList && subs &&<div><div className='arrow'></div><div className='specific-cat'>
+        {catList && subs &&<div><div className='arrow'></div><div className='specific-cat' onClick={(e)=>{e.stopPropagation()}}>
             <div className={`${props.location.search==''?'selected':''}`} style={{width:'100%',textAlign:'center',border:'1px solid rgb(225,225,225)',padding:'0.6em 0',fontSize:'0.9em',position:'relative'}}><Link to='/playlist'>全部歌单</Link></div>
             <div style={{display:'flex',flexFlow:'row nowrap'}}><div className='main-tag'><Icon style={{color:'rgb(224,148,148)',marginRight:'1em'}} type='global'/>语种</div>
                 <div className='tag-inside'>{subs[0].map((tag,i)=>{

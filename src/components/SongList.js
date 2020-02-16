@@ -542,11 +542,11 @@ class SongList extends React.Component {
         this.setState({dropdown:!this.state.dropdown})
     }
     render(){
-        // console.log(this.props.sublist)
+
             let currentLocation = this.props.location.pathname+this.props.location.search
             let location = `/${this.props.location.hash.slice(1)}`
         console.log('render里面的',this.props.location.hash)
-        // console.log(location)
+
             return((this.state.songListObj && this.state.songs)?<div className='songlist-frame'>
                 {this.state.type===2 && this.state.songListObj.creator && <div className='songlist-top' style={{padding:'2em 2em 0 2em',position:'relative'}}>
                     <div className='listinfo'>
@@ -576,9 +576,9 @@ class SongList extends React.Component {
                             <div className='tags'>
                                 <span>标签：</span>{this.state.songListObj.tags.map((tag,i,arr)=>{
                                 if(i===arr.length-1){
-                                    return <span key={i}><Link to='/'>{tag}</Link></span>
+                                    return <span key={i}><Link to={`/playlist?cat=${tag}`}>{tag}</Link></span>
                                 }
-                                return <span key={i}><Link to='/'>{tag}</Link> / </span>
+                                return <span key={i}><Link to={`/playlist?cat=${tag}`}>{tag}</Link> / </span>
                             })}
                             </div>
                             <div className='descriptions'>
@@ -614,11 +614,11 @@ class SongList extends React.Component {
                 </div>
                 }
                 <div className='songlist-nav'>
-                    {this.props.location.hash=='' && <span className='songlist-search'><input type="text" placeholder='搜索歌单音乐' onChange={this.handleSearch}/><Icon type='search'/></span>}
-                    <div className={this.props.location.hash==''?'nav-active':''}><Link to={currentLocation} >歌曲列表</Link></div>
-                    <div className={this.props.location.hash=='#comments'?'nav-active':''}><Link to={currentLocation+'#comments'}>评论({this.state.type===2?this.state.songListObj.commentCount:this.state.album.info.commentCount})</Link></div>
-                    {this.state.type===2 && <div className={this.props.location.hash=='#archived'?'nav-active':''}><Link to={currentLocation+'#archived'} >收藏者</Link></div>}
-                    {this.state.type===1 && <div className={this.props.location.hash=='#detail'?'nav-active':''}><Link to={currentLocation+'#detail'} >专辑详情</Link></div>}
+                    {this.props.location.hash==='' && <span className='songlist-search'><input type="text" placeholder='搜索歌单音乐' onChange={this.handleSearch}/><Icon type='search'/></span>}
+                    <div className={this.props.location.hash===''?'nav-active':''}><Link to={currentLocation} >歌曲列表</Link></div>
+                    <div className={this.props.location.hash==='#comments'?'nav-active':''}><Link to={currentLocation+'#comments'}>评论({this.state.type===2?this.state.songListObj.commentCount:this.state.album.info.commentCount})</Link></div>
+                    {this.state.type===2 && <div className={this.props.location.hash==='#archived'?'nav-active':''}><Link to={currentLocation+'#archived'} >收藏者</Link></div>}
+                    {this.state.type===1 && <div className={this.props.location.hash==='#detail'?'nav-active':''}><Link to={currentLocation+'#detail'} >专辑详情</Link></div>}
                 </div>
                 <div className='songlist-bottom'>
                     <Switch location={{pathname:location}}>
@@ -627,9 +627,9 @@ class SongList extends React.Component {
                         {this.state.type && <Route path={this.state.type===1?'/detail':`/archived`}   exact component={this.state.type===1?(props)=><Detail description={this.state.album.description} {...props}/>:Archived}></Route>}
                     </Switch>
                 </div>
-            </div>:(<div style={{textAlign:'center',position:'absolute',top:'50%',left:'50%',transform:'translate(0,-50%)',fontSize:'3em'}}>
-               <Icon type='loading' />加载中
-            </div>))
+            </div>:<div style={{textAlign:'center',position:'absolute',top:'50%',left:'50%',transform:'translate(0,-50%)',fontSize:'3em'}}>
+                <Icon type='loading' />加载中
+            </div>)
         }
 }
 
