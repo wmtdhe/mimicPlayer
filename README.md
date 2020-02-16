@@ -6,7 +6,6 @@
 * <code>React-Router</code>
 * <code>Redux</code>
 * <code>axios</code>
-* <code>antd - Icon, Avatar</code>
 * server-side来自于https://github.com/Binaryify/NeteaseCloudMusicApi
 ## 实现功能
 * pages - 歌单/专辑/搜索(歌曲&歌单)/主页(banners&歌单&最新歌曲)/歌曲评论/
